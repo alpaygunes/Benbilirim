@@ -1,6 +1,6 @@
 {
-    "okul_turu": "lise",
+    "okul_turu": "ortaokul",
     "zaman_asimi_dakika": 1,
-    "mesaj_konumu": "merkez",
-    "boyut_yuzde": 25
+    "mesaj_konumu": "ust_sag_kose",
+    "boyut_yuzde": 50
 }

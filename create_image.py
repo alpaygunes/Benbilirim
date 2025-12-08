@@ -173,7 +173,7 @@ def create_new_image(image_path, result):
         title_h = title_bbox[3] - title_bbox[1]
 
         title_x = (img_w - title_w) // 2
-        title_y = int(img_h * 0.15)  # kutunun üst kısmında
+        title_y = int(img_h * 0.2)  # kutunun üst kısmında
 
         draw.text((title_x, title_y), title, font=fontT, fill='black')
 
@@ -361,8 +361,8 @@ def create_new_image(image_path, result):
 
         # Dikey orta konum
         start_y = (img_h - total_h) // 5.5
-        title_y = img_h*.15 + (64-title_h)
-        print(title_y)
+        title_y = img_h*.15 + (title_h)
+        #print(title_y)
         desc_y = start_y + title_h + 200
 
         # Title'ı çiz

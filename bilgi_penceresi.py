@@ -9,7 +9,16 @@ import threading
 import time
 import sys
 
+# Modül seviyesinden `arka` nesnesini içe aktar
+try:
+    from arkaplan import arka
+except Exception:
+    arka = None
+
 AYAR_DOSYASI = os.path.join(os.path.dirname(__file__), "ayarlar.json")
+
+ 
+arka.check_double_instance(__file__) if arka is not None else None
 
 class AyarPenceresi(tk.Tk):
     def __init__(self):
@@ -34,6 +43,23 @@ class AyarPenceresi(tk.Tk):
         # Tray ikonu veya kontrol penceresi
         self.show_control_window()
         self.baslat_timer()
+
+        # Mevcut süreç PID'sini al (arkaplan nesnesi kullanılarak, varsa)
+        try:
+            self.arka_pid = arka.get_current_pid() if arka is not None else None
+        except Exception:
+            self.arka_pid = None
+
+        # Arkaplan kontrolünü başlat (auto-start flag'ini ayarlar)
+        try:
+            if arka is not None:
+                start_mode = arka.auto_start_control()
+                if start_mode != "interactive":
+                    pass
+                    self.after(1000, self.withdraw) 
+        except Exception:
+            pass
+    
 
     # ---------------------------------------------------------------------
 
@@ -203,8 +229,10 @@ class AyarPenceresi(tk.Tk):
         # KAYDET BUTONU
         # ---------------------------------------------------------------
 
-        ttk.Button(self, text="Ayarları Kaydet",
-                   command=self.ayar_kaydet).pack(pady=15)
+        ttk.Button(self, text=f"Ayarları Kaydet" ,
+               command=self.ayar_kaydet).pack(pady=15)
+
+ 
 
     # ---------------------------------------------------------------------
 
