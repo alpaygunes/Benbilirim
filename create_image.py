@@ -362,7 +362,7 @@ def create_new_image(image_path, result):
         # Dikey orta konum
         start_y = (img_h - total_h) // 5.5
         title_y = img_h*.15 + (64-title_h)
-        print(title_y)
+        #print(title_y)
         desc_y = start_y + title_h + 200
 
         # Title'ı çiz
