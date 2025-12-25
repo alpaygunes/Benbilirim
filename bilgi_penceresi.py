@@ -76,6 +76,9 @@ class AyarPenceresi(tk.Tk):
             self.timer_thread.start()
 
     def timer_loop(self):
+        if not os.path.exists(os.path.join(os.path.dirname(__file__), "data", "data.json")):
+            print("data.json dosyası yok, timer_loop fonksiyonu sonlandırılıyor...")
+            return
         """Arkaplanda sürekli çalışan zamanlayıcı"""
         while self.timer_aktif:
             try:
@@ -86,16 +89,14 @@ class AyarPenceresi(tk.Tk):
                 # zaman_asimi_dakika'i saniyeye çevir
                 saniye = settings.get('zaman_asimi_dakika', 1) * 1
 
-                #print(f"⏱ Zamanlayıcı başladı: {saniye} saniye sonra create_image.py çalıştırılacak...")
+                 
 
                 # Ayarlanmış süre kadar bekle
                 time.sleep(saniye)
-
-                # create_image.py çalıştır
-                if self.timer_aktif:
-                    #print(f"✓ {saniye} saniye geçti. create_image.py çalıştırılıyor...")
+ 
+                if self.timer_aktif: 
                     subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "create_image.py")])
-                    #print("✓ create_image.py tamamlandı.")
+                   
 
             except Exception as e:
                 print(f"✗ Hata: {e}")

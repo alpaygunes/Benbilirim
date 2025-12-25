@@ -76,7 +76,14 @@ def excel_to_json(excel_file_path, output_json_path=None):
     workbook.close()
 
     # JSON'a dönüştür
-    json_output = json.dumps(all_sheets_data, ensure_ascii=False, indent=2)
+    # Excel'den gelen tarih/zaman vb. özel tipler doğrudan JSON'a çevrilemez;
+    # desteklenmeyen tipleri güvenli bir şekilde string'e çeviriyoruz.
+    json_output = json.dumps(
+        all_sheets_data,
+        ensure_ascii=False,
+        indent=2,
+        default=str
+    )
 
     # Çıktı dosyası belirtilmemişse, aynı dizine ".json" olarak kaydet
     if output_json_path is None:

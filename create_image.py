@@ -4,33 +4,82 @@ import random
 import platform
 import ctypes
 import time
+from datetime import datetime
+
+
+def filter_by_current_date(node_data):
+    """
+    Node içindeki kayıtları sistem tarihindeki ay ve gün ile eşleşenlere göre filtreler.
+    Eğer eşleşen veri yoksa, 'date' değeri olmayan veya null olan kayıtları döndürür.
+    """
+    if not node_data:
+        return []
+    
+    # Sistem tarihindeki ay ve günü al
+    now = datetime.now()
+    current_month = now.month
+    current_day = now.day
+    
+    filtered_data = []
+    items_without_date = []
+    
+    for item in node_data:
+        # 'date' alanı yoksa veya null ise, bunları ayrı bir listede tut
+        if 'date' not in item or not item['date'] or item['date'] is None:
+            items_without_date.append(item)
+            continue
+            
+        try:
+            # Date alanını parse et (format: "2026-01-05 00:00:00")
+            date_str = item['date'].strip()
+            # Tarih string'ini parse et
+            item_date = datetime.strptime(date_str.split()[0], "%Y-%m-%d")
+            
+            # Ay ve gün eşleşiyorsa ekle
+            if item_date.month == current_month and item_date.day == current_day:
+                filtered_data.append(item)
+        except (ValueError, AttributeError, IndexError):
+            # Tarih parse edilemezse bu kaydı göz ardı et
+            continue
+    
+    # Eğer gün ve ay ile eşleşen veri yoksa, date değeri olmayan/null olan verileri döndür
+    if not filtered_data and items_without_date:
+        return items_without_date
+    
+    return filtered_data
 
 
 def select_random_node(json_file_path):
     """
     JSON dosyasından rasgele bir düğüm (anahtar-değer çifti) seçer.
+    Sistem tarihindeki ay ve gün ile eşleşen kayıtları filtreler.
     """
 
     # JSON dosyasını oku
     with open(json_file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
+    # Her node'u tarih filtresinden geçir
+    filtered_data = {}
+    for node_name, node_data in data.items():
+        filtered_node_data = filter_by_current_date(node_data)
+        if filtered_node_data:  # Sadece boş olmayan node'ları ekle
+            filtered_data[node_name] = filtered_node_data
+    
+    # Eğer hiç filtreleme sonrası node kalmadıysa, orijinal datayı kullan
+    if not filtered_data:
+        filtered_data = data
+    
     # Rasgele bir düğümü seç
     # Düğüm = bir sayfanın tüm verileri
-    random_node_name = random.choice(list(data.keys()))
-    random_node_data = data[random_node_name]
-
-    #print(f"\n{'=' * 60}")
-    #print(f"✓ Rasgele Seçilen Düğüm: {random_node_name}")
-    #print(f"{'=' * 60}")
-    #print(f"✓ Toplam {len(random_node_data)} kayıt bulunmaktadır.\n")
+    random_node_name = random.choice(list(filtered_data.keys()))
+    random_node_data = filtered_data[random_node_name]
 
     # Düğüm içerisinden rasgele bir kaydı seç
+    random_item = None
     if random_node_data:
         random_item = random.choice(random_node_data)
 
-        #print(f"✓ Rasgele Seçilen Kayıt:")
-        #print(json.dumps(random_item, ensure_ascii=False, indent=2))
 
     return {
         "node_name": random_node_name,
@@ -42,6 +91,7 @@ def select_random_node(json_file_path):
 def select_all_random_samples(json_file_path):
     """
     JSON dosyasındaki her düğümden rasgele birer kaydı seçer.
+    Sistem tarihindeki ay ve gün ile eşleşen kayıtları filtreler.
     """
 
     # JSON dosyasını oku
@@ -55,8 +105,11 @@ def select_all_random_samples(json_file_path):
     #print(f"{'=' * 60}\n")
 
     for node_name, node_data in data.items():
-        if node_data:  # Düğüm boş değilse
-            random_item = random.choice(node_data)
+        # Tarih filtresinden geçir
+        filtered_node_data = filter_by_current_date(node_data)
+        
+        if filtered_node_data:  # Sadece filtreleme sonrası boş olmayan node'ları kullan
+            random_item = random.choice(filtered_node_data)
             samples[node_name] = random_item
 
             #print(f"📌 {node_name.upper()}:")
@@ -84,6 +137,7 @@ def load_settings(ayar):
 
 
 def create_new_image(image_path, result):
+    answer=wrong=correct=desc=title = ''
     # Sadece değer varsa atama yap
     if result["random_item"].get("title"):
         title = result["random_item"].get("title")
@@ -100,31 +154,31 @@ def create_new_image(image_path, result):
     node_name = result["node_name"]
 
     if node_name == "expression":
-        title = title
+        pass
     elif node_name == "value":
-        title = title
+        pass
     elif node_name == "game":
-        title = title
+        pass
     elif node_name == "preference":
         title = "Tercihler"
     elif node_name == "proverb":
-        title = title
+        pass
     elif node_name == "reason":
-        title = title
+        pass
     elif node_name == "yemek":
-        title = title
+        pass
     elif node_name == "spelling":
         title = "Doğru Yanlış"
     elif node_name == "suggestion":
-        title = title
+        pass
     elif node_name == "word":
-        title = title
+        pass
     elif node_name == "puzzle":
         title = "? Bilmece ?"
     elif node_name == "puzzle":
         title = "Bilmece"
     elif node_name == "Günün Ayeti":
-        title = title
+        pass
     elif node_name == "hadis":
         title = "Hadis"
 
@@ -464,7 +518,10 @@ def create_new_image(image_path, result):
         y = (ana_h - new_h) // 2
 
     # PNG'nin alfa kanalını mask olarak kullan
-    ana_img.paste(kutu_img, (x, y), kutu_img)
+    if title != "" or desc != "" or answer != "" or correct != "" or wrong != "":
+        ana_img.paste(kutu_img, (x, y), kutu_img) 
+    else:
+        pass
 
     # RGBA'dan RGB'ye dönüştür (JPG kaydetmek için)
     if ana_img.mode == 'RGBA':
