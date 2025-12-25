@@ -84,6 +84,7 @@ def load_settings(ayar):
 
 
 def create_new_image(image_path, result):
+    answer=wrong=correct=desc=title = ''
     # Sadece değer varsa atama yap
     if result["random_item"].get("title"):
         title = result["random_item"].get("title")
@@ -100,31 +101,31 @@ def create_new_image(image_path, result):
     node_name = result["node_name"]
 
     if node_name == "expression":
-        title = title
+        pass
     elif node_name == "value":
-        title = title
+        pass
     elif node_name == "game":
-        title = title
+        pass
     elif node_name == "preference":
         title = "Tercihler"
     elif node_name == "proverb":
-        title = title
+        pass
     elif node_name == "reason":
-        title = title
+        pass
     elif node_name == "yemek":
-        title = title
+        pass
     elif node_name == "spelling":
         title = "Doğru Yanlış"
     elif node_name == "suggestion":
-        title = title
+        pass
     elif node_name == "word":
-        title = title
+        pass
     elif node_name == "puzzle":
         title = "? Bilmece ?"
     elif node_name == "puzzle":
         title = "Bilmece"
     elif node_name == "Günün Ayeti":
-        title = title
+        pass
     elif node_name == "hadis":
         title = "Hadis"
 
@@ -464,7 +465,10 @@ def create_new_image(image_path, result):
         y = (ana_h - new_h) // 2
 
     # PNG'nin alfa kanalını mask olarak kullan
-    ana_img.paste(kutu_img, (x, y), kutu_img)
+    if title != "" or desc != "" or answer != "" or correct != "" or wrong != "":
+        ana_img.paste(kutu_img, (x, y), kutu_img) 
+    else:
+        pass
 
     # RGBA'dan RGB'ye dönüştür (JPG kaydetmek için)
     if ana_img.mode == 'RGBA':
