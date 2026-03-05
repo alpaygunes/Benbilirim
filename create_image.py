@@ -6,7 +6,6 @@ import ctypes
 import time
 from datetime import datetime
 
-
 def filter_by_current_date(node_data):
     """
     Node içindeki kayıtları sistem tarihindeki ay ve gün ile eşleşenlere göre filtreler.
@@ -129,6 +128,7 @@ def get_image_path(result):
     okul_turu = load_settings('okul_turu')
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), f"data/{okul_turu}/resimler/{image_name}")
 
+
 def load_settings(ayar):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(script_dir, 'ayarlar.json'), 'r', encoding='utf-8') as f:
@@ -168,19 +168,19 @@ def create_new_image(image_path, result):
     elif node_name == "yemek":
         pass
     elif node_name == "spelling":
-        title = "Doğru Yanlış"
+        title       = "Doğru Yanlış"
     elif node_name == "suggestion":
         pass
     elif node_name == "word":
         pass
-    elif node_name == "puzzle":
-        title = "? Bilmece ?"
     elif node_name == "puzzle":
         title = "Bilmece"
     elif node_name == "Günün Ayeti":
         pass
     elif node_name == "hadis":
         title = "Hadis"
+    elif node_name == "zit_anlam":
+        title = "Zıt Anlamlı Kelimeler"
 
     # Import PIL modules
     from PIL import Image, ImageDraw, ImageFont
@@ -198,7 +198,9 @@ def create_new_image(image_path, result):
     # Resim boyutlarını al
     img_w, img_h = kutu_img.size
 
-    if result["node_name"] == "preference" or result["node_name"] == "spelling":
+    if result["node_name"] == "preference" \
+        or result["node_name"] == "spelling" \
+        or result["node_name"] == "zit_anlam":
 
         # Önce title'ı, diğer if bloğundakiyle aynı mantıkta yaz
         max_title_w = int(img_w * 0.50)
@@ -239,13 +241,18 @@ def create_new_image(image_path, result):
         item_font = ImageFont.truetype(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/Alkatra-VariableFont_wght.ttf'), 90)
         # İkonları yükle (RGBA)
+        zit_anlam_icon = Image.open(f'{os.path.dirname(os.path.abspath(__file__))}/assets/zit.png')
         yanlis_icon = Image.open(f'{os.path.dirname(os.path.abspath(__file__))}/assets/yanlis.png')
         if yanlis_icon.mode != 'RGBA':
-            yanlis_icon = yanlis_icon.convert('RGBA')
+            yanlis_icon = yanlis_icon.convert('RGBA') 
 
         dogru_icon = Image.open(f'{os.path.dirname(os.path.abspath(__file__))}/assets/dogru.png')
         if dogru_icon.mode != 'RGBA':
             dogru_icon = dogru_icon.convert('RGBA')
+
+        if result["node_name"] == "zit_anlam":
+            yanlis_icon = zit_anlam_icon
+            dogru_icon = zit_anlam_icon
 
         yanlis_w, yanlis_h = yanlis_icon.size
         dogru_w, dogru_h = dogru_icon.size
@@ -517,11 +524,26 @@ def create_new_image(image_path, result):
         x = (ana_w - new_w) // 2
         y = (ana_h - new_h) // 2
 
-    # PNG'nin alfa kanalını mask olarak kullan
+    kutuyu_goster = True
     if title != "" or desc != "" or answer != "" or correct != "" or wrong != "":
-        ana_img.paste(kutu_img, (x, y), kutu_img) 
-    else:
-        pass
+        kutuyu_goster = True 
+    
+    if title =="Bilmece" and desc =="":
+        kutuyu_goster = False
+    
+    if node_name =="expression" and desc =="":
+        kutuyu_goster = False
+    
+    if node_name =="zit_anlam" and (correct == "" or wrong == ""):
+        kutuyu_goster = False
+
+    if kutuyu_goster:
+        ana_img.paste(kutu_img, (x, y), kutu_img)
+    
+    print ("Title : ", title)
+    print ("desc : ", desc)
+    print ("node_name : ", node_name)
+    print ("kutuyu_goster : ", kutuyu_goster)
 
     # RGBA'dan RGB'ye dönüştür (JPG kaydetmek için)
     if ana_img.mode == 'RGBA':
@@ -616,10 +638,9 @@ def setDesktop_wallpaper(image_path):
 
 def main():
     json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/data.json")
-    # Seçenek 1: Rasgele bir düğüm seç
-    #print("\n🎲 SEÇENEK 1: Rasgele Bir Düğüm Seç")
+    # Seçenek 1: Rasgele bir düğüm seç 
     result = select_random_node(json_path)
-    image_path = get_image_path(result)
+    image_path = get_image_path(result) 
     if image_path and os.path.exists(image_path):
         create_new_image(image_path, result)
     else:

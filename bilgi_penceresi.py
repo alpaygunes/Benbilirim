@@ -17,7 +17,6 @@ except Exception:
 
 AYAR_DOSYASI = os.path.join(os.path.dirname(__file__), "ayarlar.json")
 
- 
 arka.check_double_instance(__file__) if arka is not None else None
 
 class AyarPenceresi(tk.Tk):
@@ -30,7 +29,7 @@ class AyarPenceresi(tk.Tk):
 
         # Varsayılan ayarlar
         self.settings = {
-            "okul_turu": "lise",
+            "okul_turu": "ilkokul",
             "zaman_asimi_dakika": 1,
             "mesaj_konumu": "merkez",
             "boyut_yuzde": 25
@@ -288,8 +287,6 @@ class AyarPenceresi(tk.Tk):
 
 
 # -------------------------------------------------------------------------
-
-
 if __name__ == "__main__":
     app = AyarPenceresi()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
