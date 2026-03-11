@@ -534,7 +534,10 @@ def create_new_image(image_path, result):
     if node_name =="expression" and desc =="":
         kutuyu_goster = False
     
-    if node_name =="zit_anlam" and (correct == "" or wrong == ""):
+    if node_name =="zitanlam" and (correct == "" or wrong == ""): 
+        kutuyu_goster = False
+    
+    if node_name =="value" and desc =="":
         kutuyu_goster = False
 
     if kutuyu_goster:

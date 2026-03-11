@@ -1,6 +1,6 @@
 {
     "okul_turu": "ilkokul",
-    "zaman_asimi_dakika": 10,
+    "zaman_asimi_dakika": 4,
     "mesaj_konumu": "ust_sag_kose",
-    "boyut_yuzde": 50
+    "boyut_yuzde": 25
 }
