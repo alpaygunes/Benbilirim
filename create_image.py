@@ -124,9 +124,8 @@ def get_image_path(result):
         return None
     else:
         image_name = image_name.replace(" ", "_")
-
-    okul_turu = load_settings('okul_turu')
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), f"data/{okul_turu}/resimler/{image_name}")
+ 
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), f"data/okul/resimler/{image_name}")
 
 
 def load_settings(ayar):
@@ -647,9 +646,9 @@ def main():
     if image_path and os.path.exists(image_path):
         create_new_image(image_path, result)
     else:
-        okul_turu = load_settings('okul_turu')
+         
         # Resim dizinini oluştur
-        resimler_dizini = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"data/{okul_turu}/resimler")
+        resimler_dizini = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"data/okul/resimler")
 
         # Dizindeki tüm resimleri listele
         resim_listesi = [f for f in os.listdir(resimler_dizini) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]

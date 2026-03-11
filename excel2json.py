@@ -108,9 +108,8 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data_folder = os.path.join(script_dir, "data")
 
-    # data/ilkokul dizinindeki data.xlsx dosyasını dönüştür
-    okul_turu = load_settings('okul_turu')
-    excel_path = f"{data_folder}/{okul_turu}/data.xlsx"
+    # data/okul dizinindeki data.xlsx dosyasını dönüştür 
+    excel_path = f"{data_folder}/okul/data.xlsx"
 
     # Dosyanın var olup olmadığını kontrol et
     if os.path.exists(excel_path):

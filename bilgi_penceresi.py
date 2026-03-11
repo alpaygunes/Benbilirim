@@ -28,15 +28,14 @@ class AyarPenceresi(tk.Tk):
         self.withdraw()  # Pencereyi gizle
 
         # Varsayılan ayarlar
-        self.settings = {
-            "okul_turu": "ilkokul",
-            "zaman_asimi_dakika": 1,
+        self.settings = { 
+            "zaman_asimi_dakika": 120,
             "mesaj_konumu": "merkez",
             "boyut_yuzde": 25
         }
 
         self.json_yukle()
-        self.timer_aktif = False
+        self.timer_stop_event = None
         self.timer_thread = None
 
         # Tray ikonu veya kontrol penceresi
@@ -68,42 +67,45 @@ class AyarPenceresi(tk.Tk):
         self.arayuz()
 
     def baslat_timer(self):
-        """Zamanlayıcıyı başlat"""
-        if not self.timer_aktif:
-            self.timer_aktif = True
-            self.timer_thread = threading.Thread(target=self.timer_loop, daemon=True)
-            self.timer_thread.start()
+        """Zamanlayıcıyı başlat veya yeniden başlat"""
+        if self.timer_stop_event:
+            self.timer_stop_event.set()
+        
+        self.timer_stop_event = threading.Event()
+        self.timer_thread = threading.Thread(target=self.timer_loop, args=(self.timer_stop_event,), daemon=True)
+        self.timer_thread.start()
 
-    def timer_loop(self):
+    def timer_loop(self, stop_event):
+        """Arkaplanda sürekli çalışan zamanlayıcı"""
         if not os.path.exists(os.path.join(os.path.dirname(__file__), "data", "data.json")):
             print("data.json dosyası yok, timer_loop fonksiyonu sonlandırılıyor...")
             return
-        """Arkaplanda sürekli çalışan zamanlayıcı"""
-        while self.timer_aktif:
+
+        while not stop_event.is_set():
             try:
                 # Ayarları yükle
                 with open(AYAR_DOSYASI, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
 
                 # zaman_asimi_dakika'i saniyeye çevir
-                saniye = settings.get('zaman_asimi_dakika', 1) * 1
+                saniye = settings.get('zaman_asimi_dakika', 1) 
 
-                 
+                # Ayarlanmış süre kadar bekle (veya durdurulana kadar)
+                if stop_event.wait(saniye):
+                    break
 
-                # Ayarlanmış süre kadar bekle
-                time.sleep(saniye)
- 
-                if self.timer_aktif: 
+                if not stop_event.is_set():
                     subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "create_image.py")])
-                   
 
             except Exception as e:
                 print(f"✗ Hata: {e}")
-                time.sleep(5)
+                if stop_event.wait(5):
+                    break
 
     def on_closing(self):
         """Pencere kapatılırken"""
-        self.timer_aktif = False
+        if self.timer_stop_event:
+            self.timer_stop_event.set()
         self.destroy()
 
     # ---------------------------------------------------------------------
@@ -111,10 +113,10 @@ class AyarPenceresi(tk.Tk):
     def arayuz(self):
 
         # Arka plan
-        self.config(bg="#34495e")
+        # Pencere varsayılanı kullanılacak
 
         # Kapatma düğmesi (sol üst köşe)
-        kapat_frame = tk.Frame(self, bg="#34495e")
+        kapat_frame = tk.Frame(self)
         kapat_frame.pack(side="top", anchor="nw", padx=5, pady=5)
 
         # GİZLE DÜĞMESİ
@@ -124,38 +126,17 @@ class AyarPenceresi(tk.Tk):
             command=self.withdraw  # Pencereyi gizler
         )
         gizle_buton.pack(side="left")
+ 
 
-        ana_frame = tk.Frame(self, bg="#138d90", padx=15, pady=15)
-        ana_frame.pack(pady=20)
-
-        ic_frame = tk.Frame(ana_frame, bg="#aeb6bf", padx=15, pady=15)
+        ic_frame = tk.Frame(self, padx=15, pady=35)
         ic_frame.pack()
-
-        # ---------------------------------------------------------------
-        # OKUL TÜRÜ
-        # ---------------------------------------------------------------
-
-        baslik1 = tk.Label(ic_frame, text="Okul Türü Seçin",
-                           font=("Arial", 12, "bold"), bg="#aeb6bf")
-        baslik1.pack()
-
-        self.okul_var = tk.StringVar(value=self.settings["okul_turu"])
-
-        for tur in ["ilkokul", "ortaokul", "lise"]:
-            ttk.Radiobutton(ic_frame, text=tur,
-                            value=tur,
-                            variable=self.okul_var,
-                            command=lambda t=tur: self.set_okul_turu(t)
-                            ).pack(anchor="w", pady=2)
-
-        ttk.Separator(ic_frame).pack(fill="x", pady=10)
 
         # ---------------------------------------------------------------
         # ZAMAN AŞIMI (Dakika)
         # ---------------------------------------------------------------
 
         tk.Label(ic_frame, text="Zaman Aşımı (dakika)",
-                 font=("Arial", 12, "bold"), bg="#aeb6bf").pack()
+                 font=("Arial", 12, "bold")).pack(anchor="w")
 
         self.zaman_slider = ttk.Scale(
             ic_frame, from_=1, to=60, orient="horizontal",
@@ -165,21 +146,20 @@ class AyarPenceresi(tk.Tk):
 
         self.zaman_label = tk.Label(
             ic_frame,
-            text=f"{self.settings['zaman_asimi_dakika']} Dakika",
-            bg="#aeb6bf"
+            text=f"{self.settings['zaman_asimi_dakika']} Dakika"
         )
         self.zaman_label.pack()
 
         self.zaman_slider.set(self.settings["zaman_asimi_dakika"])
 
-        ttk.Separator(ic_frame).pack(fill="x", pady=10)
+        ttk.Separator(ic_frame).pack(fill="x", pady=30)
 
         # ---------------------------------------------------------------
         # MESAJ KONUMU
         # ---------------------------------------------------------------
 
-        tk.Label(ic_frame, text="Mesaj Konumu",
-                 font=("Arial", 12, "bold"), bg="#aeb6bf").pack()
+        tk.Label(ic_frame, text="Bilgi Kutusu Konumu",
+                 font=("Arial", 12, "bold")).pack(pady=10,anchor="w")
 
         self.mesaj_konum_var = tk.StringVar(
             value=self.settings["mesaj_konumu"])
@@ -192,24 +172,34 @@ class AyarPenceresi(tk.Tk):
             "merkez"
         ]
 
+        konum_etiketleri = {
+            "ust_sol_kose": "Sol Üst Köşe",
+            "ust_sag_kose": "Sağ Üst Köşe",
+            "alt_sol_kose": "Sol Alt Köşe",
+            "alt_sag_kose": "Sağ Alt Köşe",
+            "merkez": "Merkez"
+        }
+
         for k in konumlar:
-            ttk.Radiobutton(ic_frame, text=k,
+            txt = konum_etiketleri.get(k, k)
+            ttk.Radiobutton(ic_frame, 
+                            text=txt,
                             value=k,
                             variable=self.mesaj_konum_var
                             ).pack(anchor="w", pady=2)
 
-        ttk.Separator(ic_frame).pack(fill="x", pady=10)
+        ttk.Separator(ic_frame).pack(fill="x", pady=30)
 
         # ---------------------------------------------------------------
         # BOYUT (%)
         # ---------------------------------------------------------------
 
-        tk.Label(ic_frame, text="Boyut (%)",
-                 font=("Arial", 12, "bold"), bg="#aeb6bf").pack()
+        tk.Label(ic_frame, text="Kutu Boyutu (%)",
+                 font=("Arial", 12, "bold")).pack(pady=10,anchor="w")
 
         self.boyut_slider = ttk.Scale(
             ic_frame,
-            from_=25,
+            from_=10,
             to=100,
             orient="horizontal",
             command=lambda x: self.update_boyut_label()
@@ -218,8 +208,7 @@ class AyarPenceresi(tk.Tk):
 
         self.boyut_label = tk.Label(
             ic_frame,
-            text=f"%{self.settings['boyut_yuzde']}",
-            bg="#aeb6bf"
+            text=f"%{self.settings['boyut_yuzde']}"
         )
         self.boyut_label.pack()
 
@@ -234,12 +223,7 @@ class AyarPenceresi(tk.Tk):
 
  
 
-    # ---------------------------------------------------------------------
-
-    def set_okul_turu(self, tur):
-        self.settings["okul_turu"] = tur
-
-    # ---------------------------------------------------------------------
+ 
 
     def update_zaman_label(self):
         dakika = int(float(self.zaman_slider.get()))
@@ -250,10 +234,10 @@ class AyarPenceresi(tk.Tk):
 
     def update_boyut_label(self):
         raw = float(self.boyut_slider.get())
-        yuvarlak = int(round(raw / 25) * 25)  # 25, 50, 75, 100
+        yuvarlak = int(round(raw / 5) * 5)  # 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100
 
-        # 25–100 arasında tut
-        yuvarlak = max(25, min(100, yuvarlak))
+        # 10 arasında tut
+        yuvarlak = max(10, min(100, yuvarlak))
 
         self.boyut_label.config(text=f"%{yuvarlak}")
         self.settings["boyut_yuzde"] = yuvarlak
@@ -270,9 +254,9 @@ class AyarPenceresi(tk.Tk):
         if not os.path.exists(os.path.join(os.path.dirname(__file__), "data", "data.json")):
             subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "excel2json.py")])
 
-
         messagebox.showinfo("Bilgi", "Ayarlar kaydedildi.")
-        subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "create_image.py")])
+        self.baslat_timer() # Zamanlayıcıyı yeni ayarlarla başlat
+        
 
     # ---------------------------------------------------------------------
 
