@@ -138,17 +138,11 @@ def load_settings(ayar):
 def create_new_image(image_path, result):
     answer=wrong=correct=desc=title = ''
     # Sadece değer varsa atama yap
-    if result["random_item"].get("title"):
-        title = result["random_item"].get("title")
-    if result["random_item"].get("desc"):
-        desc = result["random_item"].get("desc")
-
-    if result["random_item"].get("correct"):
-        correct = result["random_item"].get("correct")
-    if result["random_item"].get("wrong"):
-        wrong = result["random_item"].get("wrong")
-    if result["random_item"].get("answer"):
-        answer = result["random_item"].get("answer")
+    title = result["random_item"].get("title") or ""
+    desc = result["random_item"].get("desc") or ""
+    correct = result["random_item"].get("correct") or ""
+    wrong = result["random_item"].get("wrong") or ""
+    answer = result["random_item"].get("answer") or ""
 
     node_name = result["node_name"]
 
@@ -178,7 +172,7 @@ def create_new_image(image_path, result):
         pass
     elif node_name == "hadis":
         title = "Hadis"
-    elif node_name == "zit_anlam":
+    elif node_name == "zitanlam":
         title = "Zıt Anlamlı Kelimeler"
 
     # Import PIL modules
@@ -199,7 +193,7 @@ def create_new_image(image_path, result):
 
     if result["node_name"] == "preference" \
         or result["node_name"] == "spelling" \
-        or result["node_name"] == "zit_anlam":
+        or result["node_name"] == "zitanlam":
 
         # Önce title'ı, diğer if bloğundakiyle aynı mantıkta yaz
         max_title_w = int(img_w * 0.50)
@@ -234,8 +228,8 @@ def create_new_image(image_path, result):
 
         # Sadece correct ve wrong yaz
 
-        correct_text = result["random_item"].get("correct", "")
-        wrong_text = result["random_item"].get("wrong", "")
+        correct_text = result["random_item"].get("correct") or ""
+        wrong_text = result["random_item"].get("wrong") or ""
 
         item_font = ImageFont.truetype(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets/Alkatra-VariableFont_wght.ttf'), 90)
@@ -249,7 +243,7 @@ def create_new_image(image_path, result):
         if dogru_icon.mode != 'RGBA':
             dogru_icon = dogru_icon.convert('RGBA')
 
-        if result["node_name"] == "zit_anlam":
+        if result["node_name"] == "zitanlam":
             yanlis_icon = zit_anlam_icon
             dogru_icon = zit_anlam_icon
 
@@ -534,6 +528,9 @@ def create_new_image(image_path, result):
         kutuyu_goster = False
     
     if node_name =="zitanlam" and (correct == "" or wrong == ""): 
+        kutuyu_goster = False
+    
+    if node_name =="spelling" and (correct == "" or wrong == ""): 
         kutuyu_goster = False
     
     if node_name =="value" and desc =="":

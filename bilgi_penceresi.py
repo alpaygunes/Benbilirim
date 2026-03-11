@@ -221,6 +221,9 @@ class AyarPenceresi(tk.Tk):
         ttk.Button(self, text=f"Ayarları Kaydet" ,
                command=self.ayar_kaydet).pack(pady=15)
 
+        tk.Label(self, text="Kayseri İl Milli Eğitim Müdürlüğü - 2026",
+                 font=("Arial", 9, "italic"), fg="gray").pack(side="bottom", pady=10)
+
  
 
  
