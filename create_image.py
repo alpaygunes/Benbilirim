@@ -1,4 +1,5 @@
 import json
+import bilgi_penceresi
 import os
 import random
 import platform
@@ -129,8 +130,7 @@ def get_image_path(result):
 
 
 def load_settings(ayar):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(script_dir, 'ayarlar.json'), 'r', encoding='utf-8') as f:
+    with open(bilgi_penceresi._AYAR_DOSYASI, 'r', encoding='utf-8') as f:
         settings = json.load(f)
     return settings[ayar]
 
@@ -636,7 +636,7 @@ def setDesktop_wallpaper(image_path):
 
 
 def main():
-    json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/data.json")
+    json_path = bilgi_penceresi._VERI_DOSYASI
     # Seçenek 1: Rasgele bir düğüm seç 
     result = select_random_node(json_path)
     image_path = get_image_path(result) 

@@ -15,9 +15,10 @@ try:
 except Exception:
     arka = None
 
-AYAR_DOSYASI = os.path.join(os.path.dirname(__file__), "ayarlar.json")
-
-arka.check_double_instance(__file__) if arka is not None else None
+_AYAR_DIZINI = os.path.join(os.path.expanduser("~"), ".config", "Bilgipencersi")
+os.makedirs(_AYAR_DIZINI, exist_ok=True)
+_AYAR_DOSYASI = os.path.join(_AYAR_DIZINI, "ayarlar.json")
+_VERI_DOSYASI = os.path.join(_AYAR_DIZINI, "data.json")
 
 class AyarPenceresi(tk.Tk):
     def __init__(self):
@@ -29,14 +30,18 @@ class AyarPenceresi(tk.Tk):
 
         # Varsayılan ayarlar
         self.settings = { 
-            "zaman_asimi_dakika": 120,
-            "mesaj_konumu": "merkez",
+            "zaman_asimi_dakika": 120, 
+            "mesaj_konumu": "ust_sag_kose",
             "boyut_yuzde": 25
         }
 
         self.json_yukle()
         self.timer_stop_event = None
         self.timer_thread = None
+
+        # data.json yoksa ilk çalıştırmada excel2json ile oluştur
+        if not os.path.exists(_VERI_DOSYASI):
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "excel2json.py")])
 
         # Tray ikonu veya kontrol penceresi
         self.show_control_window()
@@ -53,8 +58,7 @@ class AyarPenceresi(tk.Tk):
             if arka is not None:
                 start_mode = arka.auto_start_control()
                 if start_mode != "interactive":
-                    pass
-                    self.after(1000, self.withdraw) 
+                    self.after(1000, self.withdraw)
         except Exception:
             pass
     
@@ -77,18 +81,18 @@ class AyarPenceresi(tk.Tk):
 
     def timer_loop(self, stop_event):
         """Arkaplanda sürekli çalışan zamanlayıcı"""
-        if not os.path.exists(os.path.join(os.path.dirname(__file__), "data", "data.json")):
+        if not os.path.exists(_VERI_DOSYASI):
             print("data.json dosyası yok, timer_loop fonksiyonu sonlandırılıyor...")
             return
 
         while not stop_event.is_set():
             try:
                 # Ayarları yükle
-                with open(AYAR_DOSYASI, 'r', encoding='utf-8') as f:
+                with open(_AYAR_DOSYASI, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
 
                 # zaman_asimi_dakika'i saniyeye çevir
-                saniye = settings.get('zaman_asimi_dakika', 1) 
+                saniye = settings.get('zaman_asimi_dakika', 1) * 60
 
                 # Ayarlanmış süre kadar bekle (veya durdurulana kadar)
                 if stop_event.wait(saniye):
@@ -224,10 +228,6 @@ class AyarPenceresi(tk.Tk):
         tk.Label(self, text="Kayseri İl Milli Eğitim Müdürlüğü - 2026",
                  font=("Arial", 9, "italic"), fg="gray").pack(side="bottom", pady=10)
 
- 
-
- 
-
     def update_zaman_label(self):
         dakika = int(float(self.zaman_slider.get()))
         self.settings["zaman_asimi_dakika"] = dakika
@@ -250,23 +250,24 @@ class AyarPenceresi(tk.Tk):
     def ayar_kaydet(self):
 
         self.settings["mesaj_konumu"] = self.mesaj_konum_var.get()
-        with open(AYAR_DOSYASI, "w", encoding="utf-8") as f:
+        with open(_AYAR_DOSYASI, "w", encoding="utf-8") as f:
             json.dump(self.settings, f, indent=4, ensure_ascii=False)
 
         # data.json yoksa excel2json çalıştır
-        if not os.path.exists(os.path.join(os.path.dirname(__file__), "data", "data.json")):
+        if not os.path.exists(_VERI_DOSYASI):
             subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "excel2json.py")])
 
         messagebox.showinfo("Bilgi", "Ayarlar kaydedildi.")
+        subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "create_image.py")])
         self.baslat_timer() # Zamanlayıcıyı yeni ayarlarla başlat
         
 
     # ---------------------------------------------------------------------
 
     def json_yukle(self):
-        if os.path.exists(AYAR_DOSYASI):
+        if os.path.exists(_AYAR_DOSYASI):
             try:
-                with open(AYAR_DOSYASI, "r", encoding="utf-8") as f:
+                with open(_AYAR_DOSYASI, "r", encoding="utf-8") as f:
                     yuklenen = json.load(f)
                     self.settings.update(yuklenen)
             except:
@@ -275,6 +276,8 @@ class AyarPenceresi(tk.Tk):
 
 # -------------------------------------------------------------------------
 if __name__ == "__main__":
+    if arka is not None:
+        arka.check_double_instance(__file__)
     app = AyarPenceresi()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()

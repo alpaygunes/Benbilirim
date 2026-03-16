@@ -1,6 +1,7 @@
 import openpyxl
 import json
 import os
+import bilgi_penceresi
 
 
 def parse_name(name):
@@ -99,12 +100,12 @@ def excel_to_json(excel_file_path, output_json_path=None):
     return all_sheets_data
 
 def load_settings(ayar):
-    with open('ayarlar.json', 'r', encoding='utf-8') as f:
+    with open(bilgi_penceresi._AYAR_DOSYASI, 'r', encoding='utf-8') as f:
         settings = json.load(f)
     return settings[ayar]
 
 if __name__ == "__main__":
-    # Çıktı dizini tanımla
+    # Çıktı dizini: ~/.config/Bilgipencersi (yoksa oluşturulur)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data_folder = os.path.join(script_dir, "data")
 
@@ -113,8 +114,7 @@ if __name__ == "__main__":
 
     # Dosyanın var olup olmadığını kontrol et
     if os.path.exists(excel_path):
-        
-        result = excel_to_json(excel_path, f"{data_folder}/data.json")
+        result = excel_to_json(excel_path, bilgi_penceresi._VERI_DOSYASI)
         print(f"\n✓ Toplam {len(result)} sayfa işlendi")
         print(f"✓ Sayfalar: {', '.join(result.keys())}")
     else:
